@@ -1,0 +1,153 @@
+import React from 'react';
+import {AbsoluteFill, Audio, Img, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
+import {C, FONT, card, ChapterStrip} from './index';
+import {SceneEntrance} from './Enhancements';
+
+/**
+ * Reusable scene shells. They carry layout only: titles, subtitles, media paths and frame
+ * numbers always come from the project (phrase-timing, cues), never from this file.
+ */
+
+export type TimedText = {text: string; startFrame: number; endFrame: number};
+
+/** Subtitle visible at a chapter-local frame, or '' between groups. */
+export const subtitleAt = (subtitles: TimedText[], frame: number): string =>
+  subtitles.find((s) => frame >= s.startFrame && frame < s.endFrame)?.text ?? '';
+
+export type SceneEntry = [startFrame: number, Scene: React.FC];
+
+/**
+ * Mounts each scene once, from its start frame until the next scene starts.
+ * Replaces hand-written durationInFrames arithmetic between neighbouring Sequences.
+ */
+export const SceneChain: React.FC<{scenes: SceneEntry[]; totalFrames: number}> = ({scenes, totalFrames}) => (
+  <>
+    {scenes.map(([from, Scene], i) => {
+      const until = i + 1 < scenes.length ? scenes[i + 1][0] : totalFrames;
+      return (
+        <Sequence key={i} from={from} durationInFrames={Math.max(1, until - from)}>
+          <Scene />
+        </Sequence>
+      );
+    })}
+  </>
+);
+
+export interface ChapterShellProps {
+  /** 0-based index of this chapter in `chapters`. */
+  index: number;
+  chapters: string[];
+  brand: React.ReactNode;
+  subtitle: string;
+  /** Chapter slice of the delivery audio; pass a versioned src so Studio reloads new mixes. */
+  audio?: {
+    src: string;
+    startFrom: number;
+    endAt: number;
+    acceptableTimeShiftInSeconds?: number;
+    pauseWhenBuffering?: boolean;
+  };
+  /** Hide the chapter strip, e.g. while an interview opening uses the top area. */
+  showStrip?: boolean;
+  /**
+   * All chapters' absolute frame ranges (CHAPTERS from build/cues). When given, a segmented progress bar
+   * is drawn under the subtitle and the subtitle moves up to make room.
+   */
+  progress?: ChapterRange[];
+  background?: string;
+  children: React.ReactNode;
+}
+
+export type ChapterRange = {startFrame: number; endFrame: number};
+
+const PROGRESS = {bottom: 30, height: 6, gap: 10, side: 96};
+
+/**
+ * Segmented progress bar, one segment per chapter, widths proportional to chapter length. Past chapters
+ * are full, the current one fills with `globalFrame`, later ones stay grey.
+ */
+export const ChapterProgress: React.FC<{chapters: ChapterRange[]; globalFrame: number; active: number}> = ({chapters, globalFrame, active}) => {
+  const total = chapters[chapters.length - 1].endFrame - chapters[0].startFrame;
+  return (
+    <div style={{position: 'absolute', left: PROGRESS.side, right: PROGRESS.side, bottom: PROGRESS.bottom, height: PROGRESS.height, zIndex: 30,
+      display: 'flex', gap: PROGRESS.gap}}>
+      {chapters.map((c, i) => {
+        const fill = i < active ? 1 : i > active ? 0 : Math.min(1, Math.max(0, (globalFrame - c.startFrame) / (c.endFrame - c.startFrame)));
+        return (
+          <div key={i} style={{flex: `${(c.endFrame - c.startFrame) / total} 1 0`, height: '100%', background: C.line, overflow: 'hidden'}}>
+            <div style={{width: `${fill * 100}%`, height: '100%', background: i === active ? C.blue : C.soft}} />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+/** Background, chapter audio, chapter strip and single-line subtitle shared by every chapter. */
+export const ChapterShell: React.FC<ChapterShellProps> = ({
+  index, chapters, brand, subtitle, audio, showStrip = true, progress, background = C.bg, children,
+}) => {
+  const frame = useCurrentFrame();
+  return (
+  <AbsoluteFill style={{background, color: C.ink, fontFamily: FONT}}>
+    {audio && <Audio {...audio} />}
+    {children}
+    {showStrip && (
+      <div
+        style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 134, zIndex: 20,
+          background, transform: 'translateZ(0)', pointerEvents: 'none',
+        }}
+      >
+        <ChapterStrip brand={brand} chapters={chapters} active={index} />
+      </div>
+    )}
+    {subtitle && (
+      <div style={{position: 'absolute', bottom: progress ? 58 : 42, left: 72, right: 72, zIndex: 30, display: 'flex', justifyContent: 'center'}}>
+        <div
+          style={{
+            background: C.ink, color: 'white', padding: '15px 30px', borderRadius: 18,
+            fontSize: 39, fontWeight: 600, lineHeight: 1.45, whiteSpace: 'nowrap',
+          }}
+        >
+          {subtitle}
+        </div>
+      </div>
+    )}
+    {progress && <ChapterProgress chapters={progress} globalFrame={progress[index].startFrame + frame} active={index} />}
+  </AbsoluteFill>
+  );
+};
+
+export interface FigureCardProps {
+  /** Path under public/, e.g. 'images/figure-1.png'. */
+  file: string;
+  /** Dark frame for terminal screenshots. */
+  dark?: boolean;
+  box?: {left: number; top: number; width: number; height: number};
+  /** Default: no card, the figure sits directly on the background. false wraps it in a card. */
+  plain?: boolean;
+}
+
+export const FIGURE_BOX = {left: 285, top: 157, width: 1350, height: 760};
+
+/**
+ * Original article figure, shown whole (contain) in the central area between strip and subtitle.
+ * Shown plain by default; `dark` puts terminal screenshots on a dark card.
+ */
+export const FigureCard: React.FC<FigureCardProps> = ({file, dark = false, box = FIGURE_BOX, plain = !dark}) => (
+  <SceneEntrance>
+    <div
+      style={
+        plain
+          ? {...box, position: 'absolute'}
+          : {
+            ...card, ...box, position: 'absolute',
+            overflow: 'hidden', background: dark ? '#050505' : C.card,
+          }
+      }
+    >
+      <Img src={staticFile(file)} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+    </div>
+  </SceneEntrance>
+);

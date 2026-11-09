@@ -1,0 +1,21 @@
+{
+  "name": "chao-video",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "studio": "remotion studio src/Root.tsx",
+    "render": "remotion render src/Root.tsx Video output/video.mp4",
+    "still": "remotion still src/Root.tsx Video",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.521",
+    "remotion": "4.0.521",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "typescript": "5.9.3"
+  }
+}

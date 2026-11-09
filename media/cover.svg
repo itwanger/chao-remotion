@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="350" viewBox="0 0 1280 350" role="img" aria-labelledby="title">
+<title id="title">chao-remotion · 小超视频 Skill</title>
+<rect width="1280" height="350" fill="#f7f2e8"/>
+<path d="M48 53H1232M48 296H1232" stroke="#d8d1c3" stroke-width="2"/>
+<text x="62" y="158" font-family="Arial,Helvetica,sans-serif" font-size="86" font-weight="700" letter-spacing="-5" fill="#232838">chao<tspan fill="#2150b4">-remotion</tspan></text>
+<text x="65" y="225" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="36" fill="#232838">小超视频 Skill</text>
+<g transform="translate(887 92)">
+ <rect x="15" y="15" width="270" height="150" fill="#dcdee0"/>
+ <rect width="270" height="150" fill="#fefdf9" stroke="#2150b4" stroke-width="4"/>
+ <path d="M106 38v70l68-35z" fill="#2150b4"/>
+ <path d="M18 133h100" stroke="#b8532a" stroke-width="5"/><path d="M125 133h125" stroke="#d8d1c3" stroke-width="5"/>
+</g></svg>

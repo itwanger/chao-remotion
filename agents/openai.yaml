@@ -1,0 +1,4 @@
+interface:
+  display_name: "小超视频 Skill"
+  short_description: "把 Markdown 稿件制作成小超风格的有声技术视频"
+  default_prompt: "用小超视频 Skill 制作 xxx.md"
